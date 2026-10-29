@@ -590,7 +590,17 @@ def _replace_limits_once(text: str) -> str:
 
 def _speak_sup(inner: str) -> str:
     token = inner.strip()
-    token = _replace_named_commands(token, {**_GREEK, **_OPERATORS, **_FUNCTIONS})
+    # Match these idioms on the raw token: the command map would read ``\circ``
+    # as "compose" and has no entry for ``\top``.
+    if token in {"T", "t", "top", "\\top", "intercal", "\\intercal"}:
+        return " transpose "
+    if token in {"prime", "\\prime", "'"}:
+        return " prime "
+    if token in {"circ", "\\circ", "o"}:
+        return " degrees "
+    token = _replace_named_commands(
+        token, {**_GREEK, **_OPERATORS, **_FUNCTIONS, **_SPACING_DROP}
+    )
     token = token.strip()
     if token in {"2"}:
         return " squared "
@@ -598,12 +608,6 @@ def _speak_sup(inner: str) -> str:
         return " cubed "
     if token in {"-1"}:
         return " inverse "
-    if token in {"T", "t", "top", "intercal"}:
-        return " transpose "
-    if token in {"prime", "'"}:
-        return " prime "
-    if token in {"circ", "o", "\\circ"}:
-        return " degrees "
     if token in {"*"}:
         return " star "
     return f" to the {token} "
@@ -684,8 +688,10 @@ def _verbalize_math(text: str) -> str:
     out = _until_stable(_replace_sqrt_once, out)
     out = _until_stable(_replace_binom_once, out)
     out = _until_stable(_replace_limits_once, out)
-    out = _replace_named_commands(out, {**_GREEK, **_OPERATORS, **_FUNCTIONS, **_SPACING_DROP})
+    # Scripts first: replacing named commands earlier turns ``x^\circ`` into
+    # ``x^ compose`` and leaves the script to read a single letter.
     out = _verbalize_scripts(out)
+    out = _replace_named_commands(out, {**_GREEK, **_OPERATORS, **_FUNCTIONS, **_SPACING_DROP})
     out = _drop_unknown_commands(out)
     out = _drop_braces(out)
     out = _PAD_PLUS_EQ.sub(r" \1 ", out)
