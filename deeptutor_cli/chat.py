@@ -241,7 +241,12 @@ def _apply_command(raw: str, state: ChatState) -> bool:
         if parts[1] == "clear":
             state.notebook_references = []
         elif parts[1] == "add" and len(parts) >= 3:
-            state.notebook_references.extend(_parse_notebook_refs([parts[2]]))
+            try:
+                state.notebook_references.extend(_parse_notebook_refs([parts[2]]))
+            except typer.BadParameter as exc:
+                # A typo must not end the REPL session.
+                _print_literal(str(exc), style="yellow")
+                return True
         _print_state(state)
         return True
     if command == "/show":
