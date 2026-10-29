@@ -161,8 +161,9 @@ class TexDownloader:
             def is_within_directory(directory, target):
                 abs_directory = os.path.abspath(directory)
                 abs_target = os.path.abspath(target)
-                prefix = os.path.commonprefix([abs_directory, abs_target])
-                return prefix == abs_directory
+                # commonpath compares whole components; commonprefix would
+                # accept a sibling such as ``extracted_evil`` for ``extracted``.
+                return os.path.commonpath([abs_directory, abs_target]) == abs_directory
 
             def safe_members(members):
                 for member in members:
