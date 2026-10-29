@@ -96,6 +96,8 @@ def _derive_title(content: str, fallback: str = "Untitled draft") -> str:
             stripped = line.lstrip("#").strip()
             if stripped:
                 return stripped[:120]
+            # A bare "#" marker has no text yet; keep looking.
+            continue
         return line[:120]
     return fallback
 
