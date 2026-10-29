@@ -71,10 +71,15 @@ def count_tokens_with_litellm(messages: list[dict], model_name: str) -> dict[str
 def get_model_pricing(model_name: str) -> dict[str, float]:
     if model_name in MODEL_PRICING:
         return MODEL_PRICING[model_name]
-    # Fuzzy matching
+    # Fuzzy matching: prefer the most specific key contained in the name, so
+    # "gpt-4o-mini-2024-07-18" resolves to "gpt-4o-mini" rather than "gpt-4o".
     lower = model_name.lower()
+    contained = [(key, val) for key, val in MODEL_PRICING.items() if key in lower]
+    most_specific = max(contained, key=lambda item: len(item[0]), default=None)
+    if most_specific is not None:
+        return most_specific[1]
     for key, val in MODEL_PRICING.items():
-        if key in lower or lower in key:
+        if lower in key:
             return val
     return MODEL_PRICING["gpt-4o-mini"]
 
