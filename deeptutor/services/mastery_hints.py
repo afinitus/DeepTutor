@@ -286,17 +286,23 @@ def _sanitize(raw: str, language: str) -> str:
     signal that the model wrote a question rather than the answer it was told
     not to write.
     """
-    text = " ".join(str(raw or "").split())
+    text = str(raw or "")
     # Models reach for a fence or a leading bullet even when told not to.
     for fence in ("```", "「", "」", '"', "'", "“", "”", "‘", "’"):
         text = text.replace(fence, "")
-    text = text.lstrip("-•*# ").strip()
-    if not text:
+    lines = [line.lstrip("-•*# ").strip() for line in text.splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
         return ""
     # A model that ignored "the question alone" usually answers first and asks
-    # last; keep the final sentence rather than discarding a usable question.
-    if "\n" in text:
-        text = text.split("\n")[-1].strip()
+    # last; keep the lines after the last finished sentence rather than
+    # discarding a usable question. This runs before whitespace is collapsed,
+    # which would erase the line breaks, and keeps a soft-wrapped question whole.
+    start = 0
+    for i, line in enumerate(lines[:-1]):
+        if line.endswith((".", "!", "?", ":", "。", "！", "？", "：")):
+            start = i + 1
+    text = " ".join(" ".join(lines[start:]).split())
     if not text.endswith(("?", "？")):
         return ""
     limit = _MAX_HINT_CHARS["zh"] if _is_zh(language) else _MAX_HINT_CHARS["en"]
