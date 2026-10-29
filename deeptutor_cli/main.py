@@ -104,18 +104,21 @@ def run_capability(
 
     from .common import run_turn_and_render
 
-    request = build_turn_request(
-        content=message,
-        capability=capability,
-        session_id=session,
-        tools=tool,
-        knowledge_bases=kb,
-        language=language,
-        config_items=config,
-        config_json=config_json,
-        notebook_refs=notebook_ref,
-        history_refs=history_ref,
-    )
+    try:
+        request = build_turn_request(
+            content=message,
+            capability=capability,
+            session_id=session,
+            tools=tool,
+            knowledge_bases=kb,
+            language=language,
+            config_items=config,
+            config_json=config_json,
+            notebook_refs=notebook_ref,
+            history_refs=history_ref,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     client = DeepTutorApp(workspace_id=workspace) if workspace is not None else DeepTutorApp()
     maybe_run(run_turn_and_render(app=client, request=request, fmt=fmt))
 
